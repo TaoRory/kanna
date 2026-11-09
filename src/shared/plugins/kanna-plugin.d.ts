@@ -12,6 +12,29 @@ declare module "@kanna/plugin" {
     readonly theme: PluginTheme
   }
 
+  export interface WorkspaceChat {
+    readonly chatId: string
+    readonly title: string
+    readonly status: string
+    readonly unread: boolean
+    readonly lastMessageAt: number | null
+  }
+
+  export interface WorkspaceProject {
+    readonly localPath: string
+    readonly name: string
+    readonly chats: readonly WorkspaceChat[]
+  }
+
+  export interface Workspace {
+    readonly projects: readonly WorkspaceProject[]
+    readonly ready: boolean
+    openChat(chatId: string): void
+    startChat(localPath: string): Promise<void>
+  }
+
+  export function useKannaWorkspace(): Workspace
+
   export type PluginSurfaceComponent = ComponentType<PluginSurfaceProps>
 
   export interface PluginSidebarItemInput {
