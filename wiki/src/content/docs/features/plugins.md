@@ -71,9 +71,45 @@ What a plugin can contribute:
 | Call | Adds |
 | --- | --- |
 | `addSurface(id, Component)` | A React component, shown as a panel in the chat footer |
-| `addSidebarItem({ id, title, icon, surface })` | A sidebar entry that opens one of your surfaces as a page |
+| `addSidebarItem({ id, title, icon, surface })` | A sidebar entry that opens one of your surfaces as a page at `/plugins/<pluginId>/<surface>` |
 | `addCommandCenterItem({ name, description, prompt })` | A `/` picker entry, listed as `<pluginId>:<name>` |
 | `handle(contract, handler)` | A server-side RPC handler, with `defineRpc` from `@kanna/plugin/server` |
+
+`addSidebarItem` accepts the icons `Blocks`, `LayoutDashboard`, `ListTodo` and
+`ChartNoAxesColumn`; any other name falls back to `Blocks`.
+
+### Read projects and chats
+
+A surface can read Kanna's projects and chats and jump into them with the
+`useKannaWorkspace` hook from `@kanna/plugin`:
+
+```tsx
+import { useKannaWorkspace } from "@kanna/plugin"
+
+export function Chats() {
+  const { projects, ready, openChat, startChat } = useKannaWorkspace()
+  if (!ready) return <span>Loading…</span>
+  return (
+    <ul>
+      {projects.map((project) => (
+        <li key={project.localPath}>
+          {project.name}
+          <button type="button" onClick={() => void startChat(project.localPath)}>New chat</button>
+          {project.chats.map((chat) => (
+            <button key={chat.chatId} type="button" onClick={() => openChat(chat.chatId)}>{chat.title}</button>
+          ))}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+`projects` lists every project in the sidebar with its chats, newest first. Each
+chat carries `chatId`, `title`, `status` (`idle`, `starting`, `running`,
+`waiting_for_user` or `failed`), `unread` and `lastMessageAt`. `openChat` opens the
+chat in a tab, and `startChat(localPath)` creates a new chat in that project and
+opens it. The hook only works inside a surface, because it needs the app's router.
 
 Selecting a plugin's `/` entry inserts its `prompt` text into the composer, so it
 works on every provider. A plugin can add picker entries but never replace one:

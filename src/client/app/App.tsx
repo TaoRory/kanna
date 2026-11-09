@@ -16,6 +16,7 @@ import { APP_NAME, APP_VERSION } from "../../shared/branding"
 import type { ChatSoundPreference } from "../stores/chatSoundPreferencesStore"
 import { selectChatSoundId, selectChatSoundPreference, useAppSettingsStore } from "../stores/appSettingsStore"
 import { usePluginContributions } from "../plugins/usePluginContributions"
+import { usePluginWorkspaceActionsStore } from "../plugins/pluginWorkspaceApi"
 import { playChatNotificationSound, shouldPlayChatSound } from "../lib/chatSounds"
 import { useInboxToasts } from "./useInboxToasts"
 import { useWaitingChatTabs } from "./useWaitingChatTabs"
@@ -51,7 +52,7 @@ import { fetchAuthStatus, postAuthLogin, type AuthStatusResponse } from "../api/
 import { runDetached } from "../lib/runDetached"
 import { pendingActionKey, runPendingAction, usePendingAction } from "../stores/pendingActionsStore"
 import { createChatKey, openProjectKey } from "../components/chat-ui/sidebar/sidebarPendingActions"
-import { chatPath, CHAT_ROUTE_PATTERN } from "../lib/paneTree"
+import { chatPath, CHAT_ROUTE_PATTERN, PLUGIN_PAGE_ROUTE_PATTERN } from "../lib/paneTree"
 
 const drawerVisual = createDrawerVisual()
 
@@ -72,6 +73,7 @@ const WORKSPACE_PATHS = [
   "/boards/:projectId/:boardId",
   "/boards/stack/:stackId",
   "/boards/stack/:stackId/:boardId",
+  PLUGIN_PAGE_ROUTE_PATTERN,
 ] as const
 const WorkspacePage = lazy(() => import("./ChatPage").then((module) => ({ default: module.WorkspacePage })))
 
@@ -363,6 +365,11 @@ function KannaLayoutInner({ ports = {} }: { ports?: AppPorts } = {}) {
     runPendingAction(openProjectKey(localPath), () => quickSwitcherOpenProjectPath(localPath))
   }, [quickSwitcherOpenProjectPath])
   const quickSwitcherLocalProjects = state.localProjects?.projects ?? EMPTY_LOCAL_PROJECTS
+  const setPluginStartChat = usePluginWorkspaceActionsStore((store) => store.setStartChat)
+  useEffect(() => {
+    setPluginStartChat(quickSwitcherOpenProjectPath)
+    return () => setPluginStartChat(null)
+  }, [quickSwitcherOpenProjectPath, setPluginStartChat])
 
   const sidebarActions = useSidebarActions(state)
   const sidebarElement = useMemo(() => (
